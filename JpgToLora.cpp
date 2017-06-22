@@ -2,6 +2,7 @@
 #include<fstream>
 #include<sstream>
 #include<stdio.h>
+//#include<assert.h>
 
 using namespace std;
 
@@ -17,6 +18,7 @@ class JpgToLora{
 			char tail;
 		}frame;
 		
+		
 		void addJpgtoFrame(){
 			int i;
 			int sum =0;
@@ -29,27 +31,31 @@ class JpgToLora{
 				cout<<"file open error!"<<endl;
 				//return 0;
 			}
+			//
 			ifstream inFile("invasion.jpg",ios::binary);
 			if(!inFile){
 				cout<<"frame open error!"<<endl;
 				//return 0;
 			}
 			inFile.seekg(0,ios::beg);
-			while(!(outFile.eof())){
-				for(i=0;i<254;i++){
-					frame.data[i] = inFile;
-					frame.num++;
-					inFile->next;
-					sum+=frame.data[i];
-					if(sum >= 0xFF){
-						frame.cs = 0xFF;
-					}else{
-						frame.cs = sum;
-					}
-					while(frame){
-						inFile<<frame;
-					}
-				}
+			//outFile.seekg(0,ios::beg);
+			streampos pos = inFile.tellg();
+			if(!inFile.eof()){
+				frame.num++;
+				inFile.read(frame.data,sizeof(frame.data));
+				frame.length = 0xFF;
+				outFile.write(reinterpret_cast<char *>( &frame), sizeof(frame));
+			}else{
+				frame.num++;
+				frame.length = pos%254;
+				inFile.read(frame.data,sizeof(frame.length));
+				outFile.write(reinterpret_cast<char *>( &frame),sizeof(frame.data)+7);
 			}
+			inFile.close();
+			outFile.close();
+		}
+		int main(){
+			JpgToLora();
+			return 0;
 		}
 }; 
